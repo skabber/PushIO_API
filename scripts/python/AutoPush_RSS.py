@@ -76,7 +76,7 @@ def sendBroadcastNotification(uniqueID, message):
 
 	params = {
 		"payload" : payloadJSON,
-		"tag_query" : category
+		"audience" : "broadcast"
 	}
 
 	markAlertBeenSent(uniqueID)
