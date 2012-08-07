@@ -12,16 +12,16 @@ Copyright (c) 2012 Push IO LLC. All rights reserved.
 PUSHIO_API_ENDPOINT = "https://manage.push.io"
 
 # Find these values on the Set Up > API page from your Push IO dashboard.
-PUSHIO_APP_ID = "H35lNkN9MA"
-PUSHIO_SERVICE_SECRET = "mpH37BkHn5QN2jrq5xMn"
+PUSHIO_APP_ID = ""
+PUSHIO_SERVICE_SECRET = ""
 
 # The segment of your users you want to target.
 # Corresponds to a category registration.
-PUSHIO_CATEGORY = "US"
+PUSHIO_CATEGORY = ""
 
-#RSS_URL = ""
+RSS_URL = ""
 # A few samples...
-RSS_URL = "http://news.yahoo.com/rss/"
+#RSS_URL = "http://news.yahoo.com/rss/"
 #RSS_URL = "http://rss.cnn.com/rss/cnn_topstories.rss"
 
 # A file where we persist q unique ID to track if a notification has already been sent
