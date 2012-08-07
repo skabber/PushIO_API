@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Push IO API by pushio</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Push IO API</h1>
+        <p>Integration Guide</p>
+
+        <p class="view"><a href="https://github.com/pushio/PushIO_API">View the Project on GitHub <small>pushio/PushIO_API</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/pushio/PushIO_API/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/pushio/PushIO_API/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/pushio/PushIO_API">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p><img src="http://push.io/wp-content/uploads/2012/05/pushio_logo.png" alt="Push IO®"></p>
+
+<p>Copyright © 2009 - 2012 Push IO LLC. All Rights Reserved.<br>
+Push IO® is a registered trademark in the United States. All other trademarks are the property of their respective owners.</p>
+
+<h4>Software License Information</h4>
+
+<p>The use of any and all Push IO software regardless of release state is governed by the terms of a Software License Agreement and Terms of Use that are not included here but required by reference. </p>
+
+<h4>Privacy Information</h4>
+
+<p>The use of Push IO services is subject to various privacy policies and restrictions on the use of end user information. For complete information please refer to your Master Agreement, our website privacy policies, and/or other related documents.</p>
+
+<h4>Billing</h4>
+
+<p>For information on your account and billing, please contact <a href="mailto:sales@push.io">sales@push.io</a></p>
+
+<h4>Contact Info</h4>
+
+<p>Push IO<br>
+1035 Pearl Street, Suite 400<br>
+Boulder, CO 80302 USA<br>
+303-335-0903<br><a href="mailto:support@push.io">support@push.io</a><br><a href="http://www.push.io">www.push.io</a>   </p>
+
+<h2>Preface</h2>
+
+<p>Push IO is a leading provider of real-time push notification alerts and mobile data delivery.This document provides the necessary information to leverage Push IO for your mobile application. This document corresponds to the latest version of PushIOManager for Android.</p>
+
+<h2>Definitions</h2>
+
+<h4>App ID</h4>
+
+<p>Each individual application has a unique ID used by the application to communicate with the Push IO service.</p>
+
+<h4>Sender Secret</h4>
+
+<p>This is a secret shared between Push IO and the developer using direct device messaging which authorizes them to send to an account.</p>
+
+<h4>Category</h4>
+
+<p>A category defines a specific content type that your app has which users might  be interested in. For example, if your app is a sports app, a category may be a specific team. </p>
+
+<h4>Audience</h4>
+
+<p>An audience defines a group of users based on one or more categories or platforms. For example, you might make an audience out of all of the users who have registered to a category for a team in the Western Conference who are using your app on Android.</p>
+
+<h4>Test Device</h4>
+
+<p>A device specially registered with Push IO to help you troubleshoot, test, and preview push notifications.</p>
+
+<h2>API Integration</h2>
+
+<h3>Overview</h3>
+
+<p>Push IO provides a simple RESTful API with JSON responses.</p>
+
+<p>The API offers methods for sending broadcast, targeted (category-based), and test device push notifications. Sending through the API allows you to target users on all of your platforms with a single call.</p>
+
+<p>Push IO is the only push notification provider which provides data that allows you to understand how push notification engagement leads your users to high-value actions like in-app purchases, premium content viewing, and more. The PushIOManager library provides a simple mechanism to capture this push conversion information, which is available to you via the <a href="https://manage.push.io">Push IO Manager</a> dashboard.</p>
+
+<h3>API Prerequisites</h3>
+
+<p>Before continuing, be sure you have what you need to integrate Push IO into your app.</p>
+
+<ol>
+<li>Sign up for an account at <a href="https://manage.push.io">https://manage.push.io</a>
+</li>
+<li>Complete PushIOManager integration for your app (see <a href="http://docs.push.io">Push IO Integration Guides</a>
+</li>
+</ol><p>All set? Now you’re ready to integrate with the Push IO API!</p>
+
+<h3>API Setup</h3>
+
+<ol>
+<li><p>Sign in to your <a href="https://manage.push.io">Push IO Manager</a> dashboard  </p></li>
+<li><p>Navigate to Set Up &gt; API </p></li>
+<li><p>Locate your App ID</p></li>
+<li><p>Generate a Service Secret required to send to the Push IO REST API.</p></li>
+</ol><blockquote>
+<p>You may always re-generate your Service Secret from Set Up &gt; API in order to maintain a high-level of security for sending to your app users.</p>
+</blockquote>
+
+<h3>Sample API Calls</h3>
+
+<p>The Push IO production endpoint is:</p>
+
+<pre><code>https://manage.push.io
+</code></pre>
+
+<h4>Test Device Push</h4>
+
+<p>Send a message to your test devices.</p>
+
+<p>POST</p>
+
+<pre><code>api/v1/test_app/$YOUR APP ID/$YOUR SERVICE SECRET
+</code></pre>
+
+<p>POST Data</p>
+
+<pre><code>payload={“message”: “Test Device Push”}
+</code></pre>
+
+<h4>Broadcast Push</h4>
+
+<p>Send a message to all your users.</p>
+
+<p>POST</p>
+
+<pre><code>api/v1/notify_app/$YOUR APP ID/$YOUR SERVICE SECRET
+</code></pre>
+
+<p>POST Data</p>
+
+<pre><code>payload={“message”: “Broadcast Push”}&amp;audience=broadcast
+</code></pre>
+
+<h4>Targeted Push</h4>
+
+<p>Send a message to all your users.</p>
+
+<p>POST</p>
+
+<pre><code>api/v1/notify_app/$YOUR APP ID/$YOUR SERVICE SECRET
+</code></pre>
+
+<p>POST Data</p>
+
+<pre><code>payload={“message”: “Targeted Push”}&amp;taq_query=$YOUR_CATEGORY_NAME
+</code></pre>
+
+<h3>Advanced API Calls</h3>
+
+<h4>Broadcast Push with Extra Data</h4>
+
+<p>Send a message to all your users, with the text “Hello All Users” with all other parameters set as platform defaults. In addition, the app will receive the JSON key value pair “key” : ”value”.</p>
+
+<p>POST</p>
+
+<pre><code>api/v1/notify_app/$YOUR APP ID/$YOUR SERVICE SECRET
+</code></pre>
+
+<p>POST Data</p>
+
+<pre><code>payload={“message”: “Hello All Users”, “extra” : {“key” : “value”}}&amp;audience=broadcast
+</code></pre>
+
+<h4>Broadcast Push with Platform Specific Data</h4>
+
+<p>Send a message to all your users, with alternative data sent to your iOS app. Users on all platforms EXCEPT iOS will see the text “Hello All Users” and receive the JSON pair “key” : ”value”. Users on iOS will see the text “Hello iOS Users”, receive a badge number of 2 and the JSON pair “ioskey”:”iosvalue”.</p>
+
+<p>POST</p>
+
+<pre><code>api/v1/notify_app/$YOUR APP ID/$YOUR SERVICE SECRET
+</code></pre>
+
+<p>POST Data</p>
+
+<pre><code>payload={“message”: “Hello All Users”, “extra” : {“key” : “value”}, “payload_apns” : { “alert” : “Hello iOS Users”, “badge” : 2, “extra” : {“ioskey” : “iosvalue”}}&amp;audience=broadcast
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/pushio">pushio</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-16817212-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
