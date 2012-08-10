@@ -8,11 +8,14 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+
+import java.io.PrintStream;
 import java.lang.String;
 import java.lang.InterruptedException;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
@@ -31,7 +34,6 @@ public class PushIOBuildNotifier extends Notifier {
     private final String serviceSecret;
     private final String pushCategory;
     private final String payload;
-    private final static Logger LOG = Logger.getLogger(PushIOBuildNotifier.class.getName());
 
     @DataBoundConstructor
     public PushIOBuildNotifier(String appID, String serviceSecret, String pushCategory, String payload) {
@@ -59,6 +61,10 @@ public class PushIOBuildNotifier extends Notifier {
         return payload;
     }
 
+    protected void log(final PrintStream logger, final String message) {
+        logger.println(StringUtils.defaultString(getDescriptor().getDisplayName()) + " " + message);
+    }
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.BUILD;
@@ -78,13 +84,12 @@ public class PushIOBuildNotifier extends Notifier {
         PostMethod method = new PostMethod(url);
         method.setParameter("payload", vars.expand(payload));
         method.setParameter("tag_query", vars.expand(pushCategory));
-
         client.executeMethod(method);
 
         String response = method.getResponseBodyAsString();
-        System.out.println(response);
-        method.releaseConnection();
+        log(listener.getLogger(), "PushIO response"+response);
 
+        method.releaseConnection();
         return true;
     }
 
