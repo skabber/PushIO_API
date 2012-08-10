@@ -84,6 +84,8 @@ public class PushIOBuildNotifier extends Notifier {
         PostMethod method = new PostMethod(url);
         method.setParameter("payload", vars.expand(payload));
         method.setParameter("tag_query", vars.expand(pushCategory));
+
+        log(listener.getLogger(), "Sending PushIO notification to : "+pushCategory);
         client.executeMethod(method);
 
         String response = method.getResponseBodyAsString();
