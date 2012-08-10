@@ -10,6 +10,7 @@
   <artifactId>PushIOBuildNotifier</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/PushIOBuildNotifier</url>
 
   <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
   <repositories>
@@ -32,5 +33,19 @@
             <artifactId>commons-httpclient</artifactId>
             <version>3.1</version>
         </dependency>
-    </dependencies>
+   </dependencies>
+
+   <scm>
+        <connection>scm:git:ssh://github.com/pushio/PushIO_API.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/pushio/PushIO_API.git</developerConnection>
+        <url>https://github.com/pushio/PushIO_API</url>
+   </scm>
+
+   <developers>
+        <developer>
+            <id>skabber</id>
+            <name>Jay Graves</name>
+            <email>jay@doubleencore.com</email>
+        </developer>
+   </developers>
 </project>
