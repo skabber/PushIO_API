@@ -29,7 +29,7 @@ import sys
 import os
 import feedparser
 import pickle
-import pushio
+from pushio import pushio
 
 
 def hasAlertBeenSent(uniqueID):
@@ -90,10 +90,10 @@ def main():
 					notification = pushio.Notification(message=title)
 					
 					# Send a targeted notification
-					sendCategoryPushNotification(notification, PUSHIO_CATEGORY)
+					pushioAPI.sendCategoryPushNotification(notification, PUSHIO_CATEGORY)
 					# or...	
 					# Send a broadcast notification
-					#sendBroadcastPushNotification(notification)
+					#pushioAPI.sendBroadcastPushNotification(notification)
 					markAlertBeenSent(uniqueID)
 
 	
