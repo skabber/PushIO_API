@@ -36,10 +36,10 @@ class API:
 		}
 		self.post("test_app", params)
 
-	def sendCategoryPushNotification(self, notification):
+	def sendCategoryPushNotification(self, notification, categories):
 		params = {
 			"payload" : notification.json,
-			"tag_query" : "broadcast"
+			"tag_query" : categories
 		}
 		self.post("notify_app", params)
 			
@@ -47,7 +47,6 @@ class API:
 		return "%s/api/%s/%s/%s/%s" %(PUSHIO_API_ENDPOINT, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
 		
 	def post(self, handler, params):
-		
 		endpoint = self.endpoint(handler)
 		encodedParams = urllib.urlencode(params)
 		
@@ -154,11 +153,15 @@ class MPNS:
 			
 if __name__ == '__main__':
 	pushioAPI = API("", "", debug=True)
-	notification = Notification(message="hello, world")
+	
+	testNotification = Notification(message="hello, test world")
+	pushioAPI.sendTestDevicePushNotification(testNotification)
+	
+	notification = Notification(message="hello, whole wide world")
 	pushioAPI.sendBroadcastPushNotification(notification)
 
-	testNotification = Notification(message="hello, test world")
-	pushioapi.sendTestDevicePushNotification(testNotification)
-
+	notification = Notification(message="hello, sports world")
+	categories = "Sports or US"
+	pushioAPI.sendCategoryPushNotification(notification, categories)
 
 	
