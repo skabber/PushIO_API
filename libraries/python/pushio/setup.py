@@ -6,7 +6,7 @@ setup(
 	description = 'Push IO push notification service library',
 	author='Push IO LLC',
 	author_email = "info@push.io",
-	url = "http://wwww.push.io/",
+	url = "http://www.push.io/",
 	download_url = "http://pypi.python.org/packages/source/p/pushio/pushio-1.0.1.tar.gz",
 	keywords = ["pushio", "push", "notifications"],
 	requires = ["json", "urllib"],

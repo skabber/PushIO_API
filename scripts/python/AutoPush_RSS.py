@@ -9,8 +9,6 @@ You can run this script from cron, in order to automate the process.
 Copyright (c) 2012 Push IO LLC. All rights reserved.
 """
 
-PUSHIO_API_ENDPOINT = "https://manage.push.io"
-
 # Find these values on the Set Up > API page from your Push IO dashboard.
 PUSHIO_APP_ID = ""
 PUSHIO_SERVICE_SECRET = ""
@@ -29,10 +27,10 @@ PICKLE_FILENAME = "AutoPush_RSS.pkl"
 
 import sys
 import os
-import urllib
 import feedparser
-import json
 import pickle
+import pushio
+
 
 def hasAlertBeenSent(uniqueID):
 	
@@ -64,52 +62,12 @@ def markAlertBeenSent(uniqueID):
 	pickle.dump(pickleDict, pickleFile)
 	pickleFile.close()
 	
-
-def sendBroadcastNotification(uniqueID, message):
-
-	print "Sending broadcast push notification for message:'%s'" %(message)
-
-	postEndpoint = "%s/api/v1/notify_app/%s/%s" %(PUSHIO_API_ENDPOINT,PUSHIO_APP_ID,PUSHIO_SERVICE_SECRET)
-
-	payload = { "message" : message }
-	payloadJSON = json.dumps(payload)
-
-	params = {
-		"payload" : payloadJSON,
-		"audience" : "broadcast"
-	}
-
-	markAlertBeenSent(uniqueID)
-
-	status = urllib.urlopen(postEndpoint, urllib.urlencode(params))
-	if status.code == 201:
-		print "Push IO API response %d, success\n" %(status.code)
-	else:
-		print "Push IO API response %d, failure\n" %(status.code)
-			
-def sendTargetedNotification(uniqueID, category, message):
 		
-	print "Sending targeted push notification for category:'%s' message:'%s'" %(category, message)
-
-	postEndpoint = "%s/api/v1/notify_app/%s/%s" %(PUSHIO_API_ENDPOINT,PUSHIO_APP_ID,PUSHIO_SERVICE_SECRET)
-	
-	payload = { "message" : message }
-	payloadJSON = json.dumps(payload)
-	
-	params = {
-		"payload" : payloadJSON,
-		"tag_query" : category
-	}
-		
-	markAlertBeenSent(uniqueID)
-	
-	status = urllib.urlopen(postEndpoint, urllib.urlencode(params))
-	if status.code == 201:
-		print "Push IO API response %d, success\n" %(status.code)
-	else:
-		print "Push IO API response %d, failure\n" %(status.code)
 
 def main():
+	
+	pushioAPI = pushio.API(PUSHIO_APP_ID, PUSHIO_SERVICE_SECRET, debug=True)
+	
 	try:
 		rssData = feedparser.parse(RSS_URL)
 	except:
@@ -129,12 +87,15 @@ def main():
 					continue
 				else:
 					
-					# Send a targeted notification
-					sendTargetedNotification(uniqueID, PUSHIO_CATEGORY, title)
+					notification = pushio.Notification(message=title)
 					
+					# Send a targeted notification
+					sendCategoryPushNotification(notification, PUSHIO_CATEGORY)
 					# or...	
 					# Send a broadcast notification
-					#sendBroadcastNotification(uniqueID, title)
+					#sendBroadcastPushNotification(notification)
+					markAlertBeenSent(uniqueID)
+
 	
 					
 if __name__ == '__main__':
