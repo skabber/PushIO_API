@@ -153,7 +153,7 @@ class MPNS:
 		
 			
 if __name__ == '__main__':
-	pushioAPI = API("H35lNkN9MA", "mpH37BkHn5QN2jrq5xMn", debug=True)
+	pushioAPI = API("", "", debug=True)
 	notification = Notification(message="hello, world")
 	pushioAPI.sendBroadcastPushNotification(notification)
 
