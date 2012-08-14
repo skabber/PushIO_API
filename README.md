@@ -4,6 +4,9 @@
 
 * [API Guide](http://docs.push.io/PushIO_API/)
 
+## Libraries
+* Python: pip install pushio
+
 ## Other Resources
 * [Downloads + Documenation] (http://docs.push.io)
 * [Sign In / Sign Up] (https://manage.push.io)    

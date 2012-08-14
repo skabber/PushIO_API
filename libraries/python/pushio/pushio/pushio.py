@@ -18,6 +18,11 @@ class API:
 	def __init__(self, appID, senderSecret, debug=False):
 		"""This is the object that you should create to send API requests to Push IO"""
 		
+		if appID == None or len(appID) == 0 or \
+			senderSecret == None or len(senderSecret) == 0 or \
+			appID == "Your App ID" or senderSecret == "Your Sender Secret":
+			raise Exception("You must init this class with your App ID and Sender Secret")
+		
 		self.appID = appID
 		self.senderSecret = senderSecret
 		
@@ -152,16 +157,23 @@ class MPNS:
 		
 			
 if __name__ == '__main__':
-	pushioAPI = API("", "", debug=True)
+	pushioAPI = API("Your App ID", "Your Service Secret", debug=True)
 	
-	testNotification = Notification(message="hello, test world")
+	testNotification = Notification(message="Hello, Test World")
 	pushioAPI.sendTestDevicePushNotification(testNotification)
 	
-	notification = Notification(message="hello, whole wide world")
+	notification = Notification(message="Hello, Entire World")
 	pushioAPI.sendBroadcastPushNotification(notification)
 
-	notification = Notification(message="hello, sports world")
+	notification = Notification(message="Hello, Sports World")
+	categories = "Sports"
+	pushioAPI.sendCategoryPushNotification(notification, categories)
+	
+	notification = Notification(message="Hello, Sports or US World")
 	categories = "Sports or US"
 	pushioAPI.sendCategoryPushNotification(notification, categories)
 
+	apns = APNS(alert="Hello, iOS World", sound="beep.wav")
+	notification = Notification(message="Hello, Entire World", payload_apns=apns.payload)
+	pushioAPI.sendBroadcastPushNotification(notification)
 	
