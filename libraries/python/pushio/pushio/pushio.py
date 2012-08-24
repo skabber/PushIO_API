@@ -47,6 +47,16 @@ class API:
 			"tag_query" : categories
 		}
 		self.post("notify_app", params)
+		
+	def sendNewsstandContentAvailablePushNotification(self):
+		apns = APNS(aps_extra={"content-available":1})
+		notification = Notification(payload_apns=apns.payload)
+		
+		params = {
+			"payload" : notification.json,
+			"audience" : "broadcast"
+		}
+		self.post("notify_app", params)
 			
 	def endpoint(self, handler):
 		return "%s/api/%s/%s/%s/%s" %(PUSHIO_API_ENDPOINT, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
@@ -89,7 +99,7 @@ class Notification:
 		
 		
 class APNS:
-	def __init__(self, alert=None, badge=None, sound=None, extra=None):
+	def __init__(self, alert=None, badge=None, sound=None, extra=None, aps_extra=None):
 		self.payload = {}
 		
 		if alert:
@@ -100,7 +110,8 @@ class APNS:
 			self.payload["sound"] = sound
 		if extra:
 			self.payload["extra"] = extra
-				
+		if aps_extra:
+			self.payload["aps_extra"] = aps_extra
 				
 class GCM:
 	def __init__(self, alert=None, badge=None, sound=None, extra=None, collapse_key=None, delay_while_idle=None, time_to_live=None):
@@ -176,4 +187,7 @@ if __name__ == '__main__':
 	apns = APNS(alert="Hello, iOS World", sound="beep.wav")
 	notification = Notification(message="Hello, Entire World", payload_apns=apns.payload)
 	pushioAPI.sendBroadcastPushNotification(notification)
+	
+	pushioAPI.sendNewsstandContentAvailablePushNotification()
+	
 	

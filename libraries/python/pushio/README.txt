@@ -30,6 +30,9 @@ Then, create a Notification object and determine how you want to send–– tes
 	categories = "Sports or US"
 	pushioAPI.sendCategoryPushNotification(notification, categories)
 
+If your app is an iOS Newsstand app, you can initial background content update downloads this way:
+
+	pushioAPI.sendNewsstandContentAvailablePushNotification()
 
 You can even do complex things like pass platform specific values, with each other platform getting the Notification object values.
 
