@@ -15,7 +15,7 @@ PUSHIO_API_ENDPOINT = "https://manage.push.io"
 PUSHIO_API_VERSION = "v1"
 
 class API:
-	def __init__(self, appID, senderSecret, debug=False):
+	def __init__(self, appID, senderSecret, customEndpoint=None, debug=False):
 		"""This is the object that you should create to send API requests to Push IO"""
 		
 		if appID == None or len(appID) == 0 or \
@@ -26,6 +26,7 @@ class API:
 		self.appID = appID
 		self.senderSecret = senderSecret
 		
+		self.customEndpoint = customEndpoint
 		self.debug = debug
 					
 	def sendBroadcastPushNotification(self, notification):
@@ -59,7 +60,11 @@ class API:
 		self.post("notify_app", params)
 			
 	def endpoint(self, handler):
-		return "%s/api/%s/%s/%s/%s" %(PUSHIO_API_ENDPOINT, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
+		if self.customEndpoint:
+			apiURL = self.customEndpoint
+		else:
+			apiURL = PUSHIO_API_ENDPOINT
+		return "%s/api/%s/%s/%s/%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
 		
 	def post(self, handler, params):
 		endpoint = self.endpoint(handler)
@@ -142,7 +147,7 @@ class MPNS:
 						tile_back_title=None, \
 						tile_back_background_image=None, \
 						tile_back_content=None, \
-						props_to_clear=None):
+						props_to_clear=None, toast=None):
 		self.payload = {}
 		
 		if toast_text1:
@@ -165,6 +170,8 @@ class MPNS:
 			self.payload["tile_back_content"] = tile_back_content
 		if props_to_clear:
 			self.payload["props_to_clear"] = props_to_clear
+		if toast:
+			self.payload["toast"] = toast
 		
 			
 if __name__ == '__main__':
