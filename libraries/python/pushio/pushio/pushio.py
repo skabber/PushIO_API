@@ -29,27 +29,57 @@ class API:
 		self.customEndpoint = customEndpoint
 		self.debug = debug
 					
-	def sendBroadcastPushNotification(self, notification):
+	def sendBroadcastPushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None):
 		params = {
 			"payload" : notification.json,
 			"audience" : "broadcast"
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+							
 		self.post("notify_app", params)
 		
-	def sendTestDevicePushNotification(self, notification):
+	def sendTestDevicePushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None):
 		params = {
 			"payload" : notification.json,
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
 		self.post("test_app", params)
 
-	def sendCategoryPushNotification(self, notification, categories):
+	def sendCategoryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None):
 		params = {
 			"payload" : notification.json,
 			"tag_query" : categories
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
 		self.post("notify_app", params)
 		
-	def sendNewsstandContentAvailablePushNotification(self):
+	def sendNewsstandContentAvailablePushNotification(self, dedup_key=None, deliver_at=None, not_after=None):
 		apns = APNS(aps_extra={"content-available":1})
 		notification = Notification(payload_apns=apns.payload)
 		
@@ -57,8 +87,29 @@ class API:
 			"payload" : notification.json,
 			"audience" : "broadcast"
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
 		self.post("notify_app", params)
 			
+	def secondsFromNow(self, seconds):
+		secs = float(seconds)
+		import time
+		t = time.time()
+		t2 = t + secs
+
+		gmtTime = time.gmtime(t2)
+		gmtTimeISO8601 = time.strftime('%Y-%m-%dT%H:%M:%SZ', gmtTime)
+		
+		return gmtTimeISO8601
+		
 	def endpoint(self, handler):
 		if self.customEndpoint:
 			apiURL = self.customEndpoint
@@ -79,11 +130,13 @@ class API:
 		if status.code == 201:
 			if self.debug == True:
 				print "===Push IO API response==="
-				print "%d success\n" %(status.code)
+				print "%d success" %(status.code)
+				print status.read()
 		else:
 			print "===Push IO API response==="
-			print "%d failure\n" %(status.code)
-
+			print "%d failure" %(status.code)
+			print status.read()
+			
 
 class Notification:
 	def __init__(self, message=None, extra=None, payload_apns=None, payload_gcm=None, payload_mpns=None):
@@ -196,5 +249,9 @@ if __name__ == '__main__':
 	pushioAPI.sendBroadcastPushNotification(notification)
 	
 	pushioAPI.sendNewsstandContentAvailablePushNotification()
+	
+	notification = Notification(message="Hello, Sports in 5 minutes from now")
+	categories = "Sports"
+	pushioAPI.sendCategoryPushNotification(notification, categories, deliver_at=pushioAPI.secondsFromNow(5*60))
 	
 	

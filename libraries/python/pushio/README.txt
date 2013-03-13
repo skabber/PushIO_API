@@ -40,6 +40,13 @@ You can even do complex things like pass platform specific values, with each oth
 	notification = pushio.Notification(message="Hello, Entire World", payload_apns=apns.payload)
 	pushioAPI.sendBroadcastPushNotification(notification)
 
+Also, we support server side de-duping, scheduled notifications, and don't deliver after optional parameters:
+
+	notification = Notification(message="Hello, Sports in 5 minutes from now")
+	categories = "Sports"
+	pushioAPI.sendCategoryPushNotification(notification, categories, dedup_key="SportsAlert1234", deliver_at=pushioAPI.secondsFromNow(5*60), not_after=pushioAPI.secondsFromNow(10*60)))
+	
+
 There is much more you can do. Please check out our docs site (http://docs.push.io), our support system (https://pushio.zendesk.com), or our irc channel (#pushio on irc.freenode.net).
 
 
