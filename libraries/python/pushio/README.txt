@@ -47,6 +47,20 @@ Also, we support server side de-duping, scheduled notifications, and don't deliv
 	pushioAPI.sendCategoryPushNotification(notification, categories, dedup_key="SportsAlert1234", deliver_at=pushioAPI.secondsFromNow(5*60), not_after=pushioAPI.secondsFromNow(10*60)))
 	
 
+You can also get some reporting information about your categories and notifications:
+
+	from pushio import *
+	api = pushio.API("Your App ID", "Your Service Secret", debug=False)
+	notificationReporter = pushio.NotificationReporter(api, limit=100)
+	notificationReporter.outputToCSV("notifications.csv")
+
+	from pushio import *
+	api = pushio.API("Your App ID", "Your Service Secret", debug=False)
+	categoryReporter = pushio.CategoryReporter(api)
+	categoryReporter.outputToCSV("categories.csv")
+
+
+
 There is much more you can do. Please check out our docs site (http://docs.push.io), our support system (https://pushio.zendesk.com), or our irc channel (#pushio on irc.freenode.net).
 
 

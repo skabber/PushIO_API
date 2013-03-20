@@ -3,13 +3,15 @@
 """
 pushio.py
 
-Copyright (c) 2012 Push IO LLC. All rights reserved.
+Copyright (c) 2012-2013 Push IO LLC. All rights reserved.
 """
 
 import sys
 import os
 import urllib
 import json
+import csv
+import datetime
 
 PUSHIO_API_ENDPOINT = "https://manage.push.io"
 PUSHIO_API_VERSION = "v1"
@@ -21,7 +23,7 @@ class API:
 		if appID == None or len(appID) == 0 or \
 			senderSecret == None or len(senderSecret) == 0 or \
 			appID == "Your App ID" or senderSecret == "Your Sender Secret":
-			raise Exception("You must init this class with your App ID and Sender Secret")
+			raise Exception("You must initialize this class with your App ID and Sender Secret")
 		
 		self.appID = appID
 		self.senderSecret = senderSecret
@@ -99,24 +101,75 @@ class API:
 			
 		self.post("notify_app", params)
 			
-	def secondsFromNow(self, seconds):
-		secs = float(seconds)
-		import time
-		t = time.time()
-		t2 = t + secs
+	def getNotifications(self, offset=None, limit=None, apiKey=None):
+		params = {
+		}
+		
+		if offset:
+			params["offset"] = offset
+			
+		if limit:
+			params["limit"] = limit
+			
+		print params
+		encodedParams = urllib.urlencode(params)
+		print encodedParams
+		
+		jsonData = self.get("notifications", encodedParams, "json", apiKey=apiKey)
+		return jsonData
+		
+	def getCategories(self, offset=None, limit=None, apiKey=None):
+		params = {
+		}
 
-		gmtTime = time.gmtime(t2)
-		gmtTimeISO8601 = time.strftime('%Y-%m-%dT%H:%M:%SZ', gmtTime)
-		
-		return gmtTimeISO8601
-		
-	def endpoint(self, handler):
+		if offset:
+			params["offset"] = offset
+
+		if limit:
+			params["limit"] = limit
+
+		encodedParams = urllib.urlencode(params)
+
+		jsonData = self.get("categories", encodedParams, "json", apiKey=apiKey)
+		return jsonData
+
+	def endpoint(self, handler, fileType=None, apiKey=None):
+		extension = ""
+		if fileType:
+			extension = ".%s" %(fileType)
+			
 		if self.customEndpoint:
 			apiURL = self.customEndpoint
 		else:
 			apiURL = PUSHIO_API_ENDPOINT
-		return "%s/api/%s/%s/%s/%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
+			
+		if apiKey:	
+			apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey,self.senderSecret, extension)
+		else:
+			apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret, extension)
 		
+		return apiString
+		
+	def get(self, handler, params, fileType=None, apiKey=None):
+		jsonData = None
+		
+		print params
+		endpoint = "%s?%s" %(self.endpoint(handler, fileType=fileType, apiKey=apiKey), params)
+		print endpoint
+		
+		status = urllib.urlopen(endpoint)
+		if status.code == 200:
+			jsonData = json.load(status)
+			
+			if self.debug == True:
+				print "===Push IO API response==="
+				print "%d success" %(status.code)
+		else:
+			print "===Push IO API response==="
+			print "%d failure" %(status.code)
+				
+		return jsonData
+					
 	def post(self, handler, params):
 		endpoint = self.endpoint(handler)
 		encodedParams = urllib.urlencode(params)
@@ -136,8 +189,18 @@ class API:
 			print "===Push IO API response==="
 			print "%d failure" %(status.code)
 			print status.read()
-			
 
+	def secondsFromNow(self, seconds):
+		secs = float(seconds)
+		import time
+		t = time.time()
+		t2 = t + secs
+
+		gmtTime = time.gmtime(t2)
+		gmtTimeISO8601 = time.strftime('%Y-%m-%dT%H:%M:%SZ', gmtTime)
+
+		return gmtTimeISO8601
+		
 class Notification:
 	def __init__(self, message=None, extra=None, payload_apns=None, payload_gcm=None, payload_mpns=None):
 		self.payload = {}
@@ -226,7 +289,78 @@ class MPNS:
 		if toast:
 			self.payload["toast"] = toast
 		
+class NotificationReporter:
+
+	def __init__(self, apiObject, limit=None, offset=None, apiKey=None):
+		self.notificationList = []
+		
+		if apiObject:
+			notifications = apiObject.getNotifications(limit=limit, offset=offset, apiKey=apiKey)
+						
+			if notifications:
+				for n in notifications:
+					notification = {}
+
+					if "ts" in n:
+						timeStamp = n["ts"]
+						dateTime = datetime.datetime.fromtimestamp(timeStamp / 1e3).strftime("%Y-%m-%d %H:%M:%S UTC")
+						notification["dateTime"] = dateTime
+						
+					if "plats" in n:
+						plats = n["plats"].split(",")				        
+				
+					if "abs" in n:
+						notification["message"] = n["abs"]		
+
+					if "dlvs" in n:
+						notification["deliveries"] = n["dlvs"]
+
+					if "engagement_hash" in n:
+						engagementHash = n["engagement_hash"]
+						
+						if "_app" in engagementHash:
+							notification["totalEngagements"] = engagementHash["_app"]
+								
+						for p in plats:
+							if p in engagementHash:	
+								pEngagement = engagementHash[p]
+															
+								if p[:1] == "a":
+									notification["iosEngagements"] = pEngagement
+								elif p[:1] == "g":
+									notification["androidEngagements"] = pEngagement
+
+					self.notificationList.append(notification)
+
+	def outputToCSV(self, fileName):
+		f = open(fileName, 'w')
+		csvFile = csv.writer(f)
+		csvFile.writerow(["Date", "Message", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
+		
+		for n in self.notificationList: 
+			total = n["totalEngagements"]["total"]
+			launch = n["totalEngagements"]["launch"]
+			active = n["totalEngagements"]["active"]
+			pushesSent = n["deliveries"]
+			engagementRate = (total / float(pushesSent)) * 100
+			csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, n["totalEngagements"]["launch"], n["totalEngagements"]["active"], n["totalEngagements"]["total"]])
+		f.close()
+		
+class CategoryReporter:
+
+	def __init__(self, apiObject, limit=None, offset=None, apiKey=None):
+		if apiObject:
+			self.categoryList = apiObject.getCategories(limit=limit, offset=offset, apiKey=apiKey)
 			
+	def outputToCSV(self, fileName):
+		f = open(fileName, 'w')
+		csvFile = csv.writer(f)
+		csvFile.writerow(["Category Name", "Registered Users"])
+
+		for c in self.categoryList: 
+			csvFile.writerow([c["name"], c["count"]])
+		f.close()
+
 if __name__ == '__main__':
 	pushioAPI = API("Your App ID", "Your Service Secret", debug=True)
 	
