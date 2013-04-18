@@ -104,17 +104,15 @@ class API:
 	def getNotifications(self, offset=None, limit=None, apiKey=None):
 		params = {
 		}
-		
+
 		if offset:
 			params["offset"] = offset
-			
+
 		if limit:
 			params["limit"] = limit
-			
-		print params
+
 		encodedParams = urllib.urlencode(params)
-		print encodedParams
-		
+
 		jsonData = self.get("notifications", encodedParams, "json", apiKey=apiKey)
 		return jsonData
 		
@@ -143,20 +141,22 @@ class API:
 		else:
 			apiURL = PUSHIO_API_ENDPOINT
 			
-		if apiKey:	
-			apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey,self.senderSecret, extension)
+		if apiKey:
+			if handler is "notifications" or "categories":
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, apiKey,self.senderSecret, handler, extension)
+			else:
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey, self.senderSecret, extension)
 		else:
-			apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret, extension)
+			if handler is "notifications" or "categories":
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, self.appID, self.senderSecret, handler, extension)
+			else:
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret, extension)
 		
 		return apiString
 		
 	def get(self, handler, params, fileType=None, apiKey=None):
 		jsonData = None
-		
-		print params
 		endpoint = "%s?%s" %(self.endpoint(handler, fileType=fileType, apiKey=apiKey), params)
-		print endpoint
-		
 		status = urllib.urlopen(endpoint)
 		if status.code == 200:
 			jsonData = json.load(status)
@@ -301,34 +301,28 @@ class NotificationReporter:
 				for n in notifications:
 					notification = {}
 
-					if "ts" in n:
-						timeStamp = n["ts"]
+					if "timestamp" in n:
+						timeStamp = n["timestamp"]
 						dateTime = datetime.datetime.fromtimestamp(timeStamp / 1e3).strftime("%Y-%m-%d %H:%M:%S UTC")
 						notification["dateTime"] = dateTime
 						
 					if "plats" in n:
 						plats = n["plats"].split(",")				        
 				
-					if "abs" in n:
-						notification["message"] = n["abs"]		
+					if "abstract" in n:
+						notification["message"] = n["abstract"]		
 
-					if "dlvs" in n:
-						notification["deliveries"] = n["dlvs"]
-
-					if "engagement_hash" in n:
-						engagementHash = n["engagement_hash"]
+					if "delivery_count" in n:
+						notification["deliveries"] = n["delivery_count"]
 						
-						if "_app" in engagementHash:
-							notification["totalEngagements"] = engagementHash["_app"]
-								
-						for p in plats:
-							if p in engagementHash:	
-								pEngagement = engagementHash[p]
-															
-								if p[:1] == "a":
-									notification["iosEngagements"] = pEngagement
-								elif p[:1] == "g":
-									notification["androidEngagements"] = pEngagement
+					if "active_engagements" in n:
+						notification["active_engagements"] = n["active_engagements"]
+					
+					if "launch_engagements" in n:
+						notification["launch_engagements"] = n["launch_engagements"]			
+
+					if "total_engagements" in n:
+						notification["total_engagements"] = n["total_engagements"]			
 
 					self.notificationList.append(notification)
 
@@ -338,12 +332,26 @@ class NotificationReporter:
 		csvFile.writerow(["Date", "Message", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
 		
 		for n in self.notificationList: 
-			total = n["totalEngagements"]["total"]
-			launch = n["totalEngagements"]["launch"]
-			active = n["totalEngagements"]["active"]
-			pushesSent = n["deliveries"]
-			engagementRate = (total / float(pushesSent)) * 100
-			csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, n["totalEngagements"]["launch"], n["totalEngagements"]["active"], n["totalEngagements"]["total"]])
+			total = 0
+			launch = 0
+			active = 0
+			pushesSent = 0
+			engagementRate = "0%"
+			
+			if "total_engagements" in n:
+				total = n["total_engagements"]
+
+			if "launch_engagements" in n:
+				launch = n["launch_engagements"]
+			
+			if "active_engagements" in n:
+				active = n["active_engagements"]
+			
+			if "deliveries" in n:
+				pushesSent = n["deliveries"]
+				engagementRate = (total / float(pushesSent)) * 100
+				
+			csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, launch, active, total])
 		f.close()
 		
 class CategoryReporter:
