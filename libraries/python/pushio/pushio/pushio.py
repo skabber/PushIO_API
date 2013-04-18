@@ -3,7 +3,7 @@
 """
 pushio.py
 
-Copyright (c) 2012-2013 Push IO LLC. All rights reserved.
+Copyright (c) 2012-2013 Push IO Inc. All rights reserved.
 """
 
 import sys
@@ -336,7 +336,7 @@ class NotificationReporter:
 			launch = 0
 			active = 0
 			pushesSent = 0
-			engagementRate = "0%"
+			engagementRate = 0
 			
 			if "total_engagements" in n:
 				total = n["total_engagements"]
@@ -346,11 +346,12 @@ class NotificationReporter:
 			
 			if "active_engagements" in n:
 				active = n["active_engagements"]
-			
+									
 			if "deliveries" in n:
 				pushesSent = n["deliveries"]
-				engagementRate = (total / float(pushesSent)) * 100
-				
+				if pushesSent > 0:
+					engagementRate = (total / float(pushesSent)) * 100
+					
 			csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, launch, active, total])
 		f.close()
 		
