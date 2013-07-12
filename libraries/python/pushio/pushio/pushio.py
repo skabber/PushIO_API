@@ -142,12 +142,12 @@ class API:
 			apiURL = PUSHIO_API_ENDPOINT
 			
 		if apiKey:
-			if handler is "notifications" or "categories":
+			if handler is "notifications" or handler is "categories":
 				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, apiKey,self.senderSecret, handler, extension)
 			else:
 				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey, self.senderSecret, extension)
 		else:
-			if handler is "notifications" or "categories":
+			if handler is "notifications" or handler is "categories":
 				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, self.appID, self.senderSecret, handler, extension)
 			else:
 				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret, extension)
@@ -291,8 +291,9 @@ class MPNS:
 		
 class NotificationReporter:
 
-	def __init__(self, apiObject, limit=None, offset=None, apiKey=None):
+	def __init__(self, apiObject, limit=None, offset=None, apiKey=None, query=False):
 		self.notificationList = []
+		self.query=query
 		
 		if apiObject:
 			notifications = apiObject.getNotifications(limit=limit, offset=offset, apiKey=apiKey)
@@ -310,7 +311,7 @@ class NotificationReporter:
 						plats = n["plats"].split(",")				        
 				
 					if "abstract" in n:
-						notification["message"] = n["abstract"]		
+						notification["message"] = n["abstract"].encode('utf-8')		
 
 					if "delivery_count" in n:
 						notification["deliveries"] = n["delivery_count"]
@@ -322,14 +323,21 @@ class NotificationReporter:
 						notification["launch_engagements"] = n["launch_engagements"]			
 
 					if "total_engagements" in n:
-						notification["total_engagements"] = n["total_engagements"]			
+						notification["total_engagements"] = n["total_engagements"]		
+						
+					if query == True and "tag_query" in n:
+						notification["query"] = n["tag_query"]	
 
 					self.notificationList.append(notification)
 
 	def outputToCSV(self, fileName):
 		f = open(fileName, 'w')
 		csvFile = csv.writer(f)
-		csvFile.writerow(["Date", "Message", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
+		
+		if self.query == True:
+			csvFile.writerow(["Date", "Message", "Query", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
+		else:
+			csvFile.writerow(["Date", "Message", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
 		
 		for n in self.notificationList: 
 			total = 0
@@ -352,7 +360,11 @@ class NotificationReporter:
 				if pushesSent > 0:
 					engagementRate = (total / float(pushesSent)) * 100
 					
-			csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, launch, active, total])
+			if self.query == True:
+				csvFile.writerow([n["dateTime"], n["message"], n["query"], pushesSent, engagementRate, launch, active, total])
+			else:
+				csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, launch, active, total])
+				
 		f.close()
 		
 class CategoryReporter:
