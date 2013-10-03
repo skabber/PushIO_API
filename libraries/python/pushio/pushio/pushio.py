@@ -65,6 +65,9 @@ class API:
 		self.post("test_app", params)
 
 	def sendCategoryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None):
+		self.sendQueryPushNotification(notification, categories, dedup_key, deliver_at, not_after)
+		
+	def sendQueryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None, audience=None):
 		params = {
 			"payload" : notification.json,
 			"tag_query" : categories
@@ -78,6 +81,9 @@ class API:
 			
 		if not_after is not None:
 			params["not_after"] = not_after
+			
+		if audience is not None:
+			params["audience"] = audience
 			
 		self.post("notify_app", params)
 		
@@ -392,12 +398,12 @@ if __name__ == '__main__':
 	pushioAPI.sendBroadcastPushNotification(notification)
 
 	notification = Notification(message="Hello, Sports World")
-	categories = "Sports"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports"
+	pushioAPI.sendQueryPushNotification(notification, query)
 	
 	notification = Notification(message="Hello, Sports or US World")
-	categories = "Sports or US"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports or US"
+	pushioAPI.sendQueryPushNotification(notification, query)
 
 	apns = APNS(alert="Hello, iOS World", sound="beep.wav")
 	notification = Notification(message="Hello, Entire World", payload_apns=apns.payload)
@@ -406,7 +412,7 @@ if __name__ == '__main__':
 	pushioAPI.sendNewsstandContentAvailablePushNotification()
 	
 	notification = Notification(message="Hello, Sports in 5 minutes from now")
-	categories = "Sports"
-	pushioAPI.sendCategoryPushNotification(notification, categories, deliver_at=pushioAPI.secondsFromNow(5*60))
+	query = "Sports"
+	pushioAPI.sendqueryPushNotification(notification, query, deliver_at=pushioAPI.secondsFromNow(5*60))
 	
 	

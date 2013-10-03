@@ -23,12 +23,12 @@ Then, create a Notification object and determine how you want to send–– tes
 	pushioAPI.sendBroadcastPushNotification(notification)
 
 	notification = pushio.Notification(message="Hello, Sports World")
-	categories = "Sports"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports"
+	pushioAPI.sendQueryPushNotification(notification, query)
 	
 	notification =pushio. Notification(message="Hello, Sports or US World")
-	categories = "Sports or US"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports or US"
+	pushioAPI.sendQueryPushNotification(notification, query)
 
 If your app is an iOS Newsstand app, you can initial background content update downloads this way:
 
@@ -43,11 +43,11 @@ You can even do complex things like pass platform specific values, with each oth
 Also, we support server side de-duping, scheduled notifications, and don't deliver after optional parameters:
 
 	notification = Notification(message="Hello, Sports in 5 minutes from now")
-	categories = "Sports"
-	pushioAPI.sendCategoryPushNotification(notification, categories, dedup_key="SportsAlert1234", deliver_at=pushioAPI.secondsFromNow(5*60), not_after=pushioAPI.secondsFromNow(10*60)))
+	query = "Sports"
+	pushioAPI.sendQueryPushNotification(notification, query, dedup_key="SportsAlert1234", deliver_at=pushioAPI.secondsFromNow(5*60), not_after=pushioAPI.secondsFromNow(10*60)))
 	
 
-You can also get some reporting information about your categories and notifications:
+You can also get some reporting information about your query and notifications:
 
 	from pushio import *
 	api = pushio.API("Your App ID", "Your Service Secret", debug=False)
@@ -56,11 +56,11 @@ You can also get some reporting information about your categories and notificati
 
 	from pushio import *
 	api = pushio.API("Your App ID", "Your Service Secret", debug=False)
-	categoryReporter = pushio.CategoryReporter(api)
-	categoryReporter.outputToCSV("categories.csv")
+	categoryReporter = pushio.QueryReporter(api)
+	categoryReporter.outputToCSV("query.csv")
 
 
 
-There is much more you can do. Please check out our docs site (http://docs.push.io), our support system (https://pushio.zendesk.com), or our irc channel (#pushio on irc.freenode.net).
+There is much more you can do. Please check our support site (https://pushio.zendesk.com)
 
 
