@@ -64,6 +64,27 @@ class API:
 			
 		self.post("test_app", params)
 
+	def sendNotifyDevicesPushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None, api_key=None, recipient_ids=[]):
+		params = {
+			"payload" : notification.json,
+		}
+
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+
+		if not_after is not None:
+			params["not_after"] = not_after
+			
+		if api_key is not None and recipient_ids is not None:
+			recipients_param = { api_key : recipient_ids}
+			params["recipient_ids"] = json.dumps(recipients_param)
+			
+		print params
+		self.post("notify_devices", params)
+
 	def sendCategoryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None):
 		self.sendQueryPushNotification(notification, categories, dedup_key, deliver_at, not_after)
 		
@@ -149,7 +170,7 @@ class API:
 			
 		if apiKey:
 			if handler is "notifications" or handler is "categories":
-				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, apiKey,self.senderSecret, handler, extension)
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, apiKey, self.senderSecret, handler, extension)
 			else:
 				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey, self.senderSecret, extension)
 		else:
