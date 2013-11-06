@@ -335,10 +335,14 @@ class NotificationReporter:
 						notification["dateTime"] = dateTime
 						
 					if "plats" in n:
-						plats = n["plats"].split(",")				        
+						p = n["plats"]
+						if isinstance(p, basestring):
+							plats = p.split(",")				        
 				
 					if "abstract" in n:
-						notification["message"] = n["abstract"].encode('utf-8')		
+						abs = ["abstract"]
+						if isinstance(abs, basestring):
+							notification["message"] = abs.encode('utf-8')		
 
 					if "delivery_count" in n:
 						notification["deliveries"] = n["delivery_count"]
