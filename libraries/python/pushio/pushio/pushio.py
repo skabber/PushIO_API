@@ -339,11 +339,12 @@ class NotificationReporter:
 						if isinstance(p, basestring):
 							plats = p.split(",")				        
 				
+					notification["message"] = ""	
 					if "abstract" in n:
-						abs = ["abstract"]
+						abs = n["abstract"]
 						if isinstance(abs, basestring):
-							notification["message"] = abs.encode('utf-8')		
-
+							notification["message"] = abs.encode('utf-8')	
+									
 					if "delivery_count" in n:
 						notification["deliveries"] = n["delivery_count"]
 						
