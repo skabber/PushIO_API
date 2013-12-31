@@ -3,7 +3,7 @@
 """
 __init__.py
 
-Copyright (c) 2012 Push IO LLC. All rights reserved.
+Copyright (c) 2012-2013 Push IO Inc. All rights reserved.
 """
 
 __all__ = ["pushio"]

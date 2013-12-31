@@ -3,54 +3,200 @@
 """
 pushio.py
 
-Copyright (c) 2012 Push IO LLC. All rights reserved.
+Copyright (c) 2012-2013 Push IO Inc. All rights reserved.
 """
 
 import sys
 import os
 import urllib
 import json
+import csv
+import datetime
 
 PUSHIO_API_ENDPOINT = "https://manage.push.io"
 PUSHIO_API_VERSION = "v1"
 
 class API:
-	def __init__(self, appID, senderSecret, debug=False):
+	def __init__(self, appID, senderSecret, customEndpoint=None, debug=False):
 		"""This is the object that you should create to send API requests to Push IO"""
 		
 		if appID == None or len(appID) == 0 or \
 			senderSecret == None or len(senderSecret) == 0 or \
 			appID == "Your App ID" or senderSecret == "Your Sender Secret":
-			raise Exception("You must init this class with your App ID and Sender Secret")
+			raise Exception("You must initialize this class with your App ID and Sender Secret")
 		
 		self.appID = appID
 		self.senderSecret = senderSecret
 		
+		self.customEndpoint = customEndpoint
 		self.debug = debug
 					
-	def sendBroadcastPushNotification(self, notification):
+	def sendBroadcastPushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None):
 		params = {
 			"payload" : notification.json,
 			"audience" : "broadcast"
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+							
 		self.post("notify_app", params)
 		
-	def sendTestDevicePushNotification(self, notification):
+	def sendTestDevicePushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None):
 		params = {
 			"payload" : notification.json,
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
 		self.post("test_app", params)
 
-	def sendCategoryPushNotification(self, notification, categories):
+	def sendNotifyDevicesPushNotification(self, notification, dedup_key=None, deliver_at=None, not_after=None, api_key=None, recipient_ids=[]):
+		params = {
+			"payload" : notification.json,
+		}
+
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+
+		if not_after is not None:
+			params["not_after"] = not_after
+			
+		if api_key is not None and recipient_ids is not None:
+			recipients_param = { api_key : recipient_ids}
+			params["recipient_ids"] = json.dumps(recipients_param)
+			
+		print params
+		self.post("notify_devices", params)
+
+	def sendCategoryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None):
+		self.sendQueryPushNotification(notification, categories, dedup_key, deliver_at, not_after)
+		
+	def sendQueryPushNotification(self, notification, categories, dedup_key=None, deliver_at=None, not_after=None, audience=None):
 		params = {
 			"payload" : notification.json,
 			"tag_query" : categories
 		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
+		if audience is not None:
+			params["audience"] = audience
+			
+		self.post("notify_app", params)
+		
+	def sendNewsstandContentAvailablePushNotification(self, dedup_key=None, deliver_at=None, not_after=None):
+		apns = APNS(aps_extra={"content-available":1})
+		notification = Notification(payload_apns=apns.payload)
+		
+		params = {
+			"payload" : notification.json,
+			"audience" : "broadcast"
+		}
+		
+		if dedup_key is not None:
+			params["dedup_key"] = dedup_key
+			
+		if deliver_at is not None:
+			params["deliver_at"] = deliver_at
+			
+		if not_after is not None:
+			params["not_after"] = not_after
+			
 		self.post("notify_app", params)
 			
-	def endpoint(self, handler):
-		return "%s/api/%s/%s/%s/%s" %(PUSHIO_API_ENDPOINT, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret)
+	def getNotifications(self, offset=None, limit=None, apiKey=None):
+		params = {
+		}
+
+		if offset:
+			params["offset"] = offset
+
+		if limit:
+			params["limit"] = limit
+
+		encodedParams = urllib.urlencode(params)
+
+		jsonData = self.get("notifications", encodedParams, "json", apiKey=apiKey)
+		return jsonData
 		
+	def getCategories(self, offset=None, limit=None, apiKey=None):
+		params = {
+		}
+
+		if offset:
+			params["offset"] = offset
+
+		if limit:
+			params["limit"] = limit
+
+		encodedParams = urllib.urlencode(params)
+
+		jsonData = self.get("categories", encodedParams, "json", apiKey=apiKey)
+		return jsonData
+
+	def endpoint(self, handler, fileType=None, apiKey=None):
+		extension = ""
+		if fileType:
+			extension = ".%s" %(fileType)
+			
+		if self.customEndpoint:
+			apiURL = self.customEndpoint
+		else:
+			apiURL = PUSHIO_API_ENDPOINT
+			
+		if apiKey:
+			if handler is "notifications" or handler is "categories":
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, apiKey, self.senderSecret, handler, extension)
+			else:
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, apiKey, self.senderSecret, extension)
+		else:
+			if handler is "notifications" or handler is "categories":
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, self.appID, self.senderSecret, handler, extension)
+			else:
+				apiString = "%s/api/%s/%s/%s/%s%s" %(apiURL, PUSHIO_API_VERSION, handler, self.appID,self.senderSecret, extension)
+		
+		return apiString
+		
+	def get(self, handler, params, fileType=None, apiKey=None):
+		jsonData = None
+		endpoint = "%s?%s" %(self.endpoint(handler, fileType=fileType, apiKey=apiKey), params)
+		status = urllib.urlopen(endpoint)
+		if status.code == 200:
+			jsonData = json.load(status)
+			
+			if self.debug == True:
+				print "===Push IO API response==="
+				print "%d success" %(status.code)
+		else:
+			print "===Push IO API response==="
+			print "%d failure" %(status.code)
+				
+		return jsonData
+					
 	def post(self, handler, params):
 		endpoint = self.endpoint(handler)
 		encodedParams = urllib.urlencode(params)
@@ -64,12 +210,24 @@ class API:
 		if status.code == 201:
 			if self.debug == True:
 				print "===Push IO API response==="
-				print "%d success\n" %(status.code)
+				print "%d success" %(status.code)
+				print status.read()
 		else:
 			print "===Push IO API response==="
-			print "%d failure\n" %(status.code)
+			print "%d failure" %(status.code)
+			print status.read()
 
+	def secondsFromNow(self, seconds):
+		secs = float(seconds)
+		import time
+		t = time.time()
+		t2 = t + secs
 
+		gmtTime = time.gmtime(t2)
+		gmtTimeISO8601 = time.strftime('%Y-%m-%dT%H:%M:%SZ', gmtTime)
+
+		return gmtTimeISO8601
+		
 class Notification:
 	def __init__(self, message=None, extra=None, payload_apns=None, payload_gcm=None, payload_mpns=None):
 		self.payload = {}
@@ -89,7 +247,7 @@ class Notification:
 		
 		
 class APNS:
-	def __init__(self, alert=None, badge=None, sound=None, extra=None):
+	def __init__(self, alert=None, badge=None, sound=None, extra=None, aps_extra=None):
 		self.payload = {}
 		
 		if alert:
@@ -100,7 +258,8 @@ class APNS:
 			self.payload["sound"] = sound
 		if extra:
 			self.payload["extra"] = extra
-				
+		if aps_extra:
+			self.payload["aps_extra"] = aps_extra
 				
 class GCM:
 	def __init__(self, alert=None, badge=None, sound=None, extra=None, collapse_key=None, delay_while_idle=None, time_to_live=None):
@@ -131,7 +290,7 @@ class MPNS:
 						tile_back_title=None, \
 						tile_back_background_image=None, \
 						tile_back_content=None, \
-						props_to_clear=None):
+						props_to_clear=None, toast=None):
 		self.payload = {}
 		
 		if toast_text1:
@@ -154,8 +313,107 @@ class MPNS:
 			self.payload["tile_back_content"] = tile_back_content
 		if props_to_clear:
 			self.payload["props_to_clear"] = props_to_clear
+		if toast:
+			self.payload["toast"] = toast
 		
+class NotificationReporter:
+
+	def __init__(self, apiObject, limit=None, offset=None, apiKey=None, query=False):
+		self.notificationList = []
+		self.query=query
+		
+		if apiObject:
+			notifications = apiObject.getNotifications(limit=limit, offset=offset, apiKey=apiKey)
+						
+			if notifications:
+				for n in notifications:
+					notification = {}
+
+					if "timestamp" in n:
+						timeStamp = n["timestamp"]
+						dateTime = datetime.datetime.fromtimestamp(timeStamp / 1e3).strftime("%Y-%m-%d %H:%M:%S UTC")
+						notification["dateTime"] = dateTime
+						
+					if "plats" in n:
+						p = n["plats"]
+						if isinstance(p, basestring):
+							plats = p.split(",")				        
+				
+					notification["message"] = ""	
+					if "abstract" in n:
+						abs = n["abstract"]
+						if isinstance(abs, basestring):
+							notification["message"] = abs.encode('utf-8')	
+									
+					if "delivery_count" in n:
+						notification["deliveries"] = n["delivery_count"]
+						
+					if "active_engagements" in n:
+						notification["active_engagements"] = n["active_engagements"]
+					
+					if "launch_engagements" in n:
+						notification["launch_engagements"] = n["launch_engagements"]			
+
+					if "total_engagements" in n:
+						notification["total_engagements"] = n["total_engagements"]		
+						
+					if query == True and "tag_query" in n:
+						notification["query"] = n["tag_query"]	
+
+					self.notificationList.append(notification)
+
+	def outputToCSV(self, fileName):
+		f = open(fileName, 'w')
+		csvFile = csv.writer(f)
+		
+		if self.query == True:
+			csvFile.writerow(["Date", "Message", "Query", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
+		else:
+			csvFile.writerow(["Date", "Message", "Pushes Sent", "User Engagement %", "Launch Engagements", "Active Engagements", "Total Engagements"])
+		
+		for n in self.notificationList: 
+			total = 0
+			launch = 0
+			active = 0
+			pushesSent = 0
+			engagementRate = 0
 			
+			if "total_engagements" in n:
+				total = n["total_engagements"]
+
+			if "launch_engagements" in n:
+				launch = n["launch_engagements"]
+			
+			if "active_engagements" in n:
+				active = n["active_engagements"]
+									
+			if "deliveries" in n:
+				pushesSent = n["deliveries"]
+				if pushesSent > 0:
+					engagementRate = (total / float(pushesSent)) * 100
+					
+			if self.query == True:
+				csvFile.writerow([n["dateTime"], n["message"], n["query"], pushesSent, engagementRate, launch, active, total])
+			else:
+				csvFile.writerow([n["dateTime"], n["message"], pushesSent, engagementRate, launch, active, total])
+				
+		f.close()
+		
+class CategoryReporter:
+
+	def __init__(self, apiObject, limit=None, offset=None, apiKey=None):
+		if apiObject:
+			self.categoryList = apiObject.getCategories(limit=limit, offset=offset, apiKey=apiKey)
+			
+	def outputToCSV(self, fileName):
+		f = open(fileName, 'w')
+		csvFile = csv.writer(f)
+		csvFile.writerow(["Category Name", "Registered Users"])
+
+		for c in self.categoryList: 
+			csvFile.writerow([c["name"], c["count"]])
+		f.close()
+
 if __name__ == '__main__':
 	pushioAPI = API("Your App ID", "Your Service Secret", debug=True)
 	
@@ -166,14 +424,21 @@ if __name__ == '__main__':
 	pushioAPI.sendBroadcastPushNotification(notification)
 
 	notification = Notification(message="Hello, Sports World")
-	categories = "Sports"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports"
+	pushioAPI.sendQueryPushNotification(notification, query)
 	
 	notification = Notification(message="Hello, Sports or US World")
-	categories = "Sports or US"
-	pushioAPI.sendCategoryPushNotification(notification, categories)
+	query = "Sports or US"
+	pushioAPI.sendQueryPushNotification(notification, query)
 
 	apns = APNS(alert="Hello, iOS World", sound="beep.wav")
 	notification = Notification(message="Hello, Entire World", payload_apns=apns.payload)
 	pushioAPI.sendBroadcastPushNotification(notification)
+	
+	pushioAPI.sendNewsstandContentAvailablePushNotification()
+	
+	notification = Notification(message="Hello, Sports in 5 minutes from now")
+	query = "Sports"
+	pushioAPI.sendqueryPushNotification(notification, query, deliver_at=pushioAPI.secondsFromNow(5*60))
+	
 	
